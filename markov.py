@@ -5,7 +5,7 @@ import sys
 import os.path
 import random
 
-def create_markov_map(filename):
+def create_markov_map(filename, chunk_size):
 	"""build a Markov map of a text"""
 
 	markov_map = {}	
@@ -20,9 +20,11 @@ def create_markov_map(filename):
 	#the Markov chain calculation relies on the
 	#word having a word after it, so the last word
 	#doesn't count in the calculation 
-	for i in range(len(word_list)-1):
+	for i in range(len(word_list) - chunk_size):
 		word = word_list[i]
-		next_word = word_list[i+1]
+		#get the next word from list of next words
+		#where the list has a size of chunk_size
+		next_word = " ".join(word_list[i+1:i+chunk_size+1])
 
 		#word was not previously parsed
 		#create new element in map
@@ -48,6 +50,8 @@ def create_markov_map(filename):
 		markov_map[word]["__frequency__"] = frequency
 		#print word, frequency
 		
+	print markov_map
+
 	return markov_map
 
 
@@ -90,19 +94,20 @@ def generate_text(max_words, markov_map):
 		if not next_word in markov_map:
 			word = random.choice(markov_map.keys())
 		else:
-			word = next_word
+			#the next word should the first word of the chunk
+			word = next_word.split()[0]
 
 		num_words += 1
 
 	return " ".join(word_list)
 
 
-def main(filename, num_words):
-	#make sure the arguments are valid
+def main(filename, num_words, chunk_size):
+	#file must exist!
 	if os.path.exists(filename):
-
+		#num_words has to be at least 1
 		if num_words > 0:
-			araby_markov_map = create_markov_map(filename)
+			araby_markov_map = create_markov_map(filename, chunk_size)
 			generated_text = generate_text(num_words, araby_markov_map)
 			print generated_text
 
@@ -113,12 +118,14 @@ def main(filename, num_words):
 		print "Error: filename '{0}' does not exist!".format(filename)
 
 if __name__ == "__main__":
-	if len(sys.argv) >= 3:
+	#check for the right number of arguments
+	if len(sys.argv) >= 4:
 		try:
 			num_words = int(sys.argv[2])
-			main(sys.argv[1], num_words)
+			chunk_size = int(sys.argv[3])
+			main(sys.argv[1], num_words, chunk_size)
 		except ValueError:
-			print "Error: 2nd argument is not a number."
+			print "Error: Not a number."
 
 	elif len(sys.argv) == 1:
 		print "Usage: markov.py filename num_words"
