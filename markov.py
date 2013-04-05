@@ -48,9 +48,6 @@ def create_markov_map(filename, chunk_size):
 			frequency += num
 		
 		markov_map[word]["__frequency__"] = frequency
-		#print word, frequency
-		
-	print markov_map
 
 	return markov_map
 
