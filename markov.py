@@ -52,14 +52,14 @@ def create_markov_map(filename, chunk_size):
 	return markov_map
 
 
-def generate_text(max_words, markov_map):
+def generate_text(max_words, markov_map, words_per_line):
 	"""generate text sequence of a specified length using a given Markov map"""
 
-	word_list = []
+	chunk_list = []
 
 	#pick a random word to start with
 	word = random.choice(markov_map.keys())
-	word_list.append(word)
+	chunk_list.append(word)
 
 	num_words = 1
 	while num_words < max_words:
@@ -84,7 +84,7 @@ def generate_text(max_words, markov_map):
 				if val >= threshold:
 					break
 		
-		word_list.append(next_word)
+		chunk_list.append(next_word)
 
 		#if next_word is the last word, it is not in the markov map
 		#find a random word to replace it instead
@@ -96,16 +96,28 @@ def generate_text(max_words, markov_map):
 
 		num_words += 1
 
-	return " ".join(word_list)
+	word_list = " ".join(chunk_list).split()
+	text = ""
+
+	if words_per_line > 0:
+		#split output into lines
+		for i, word in enumerate(word_list):
+			text += word + " "
+			if (i+1) % words_per_line == 0:
+				text += "\n"
+	else:
+		text = " ".join(word_list)
+
+	return text
 
 
-def main(filename, num_words, chunk_size):
+def main(filename, num_words, chunk_size, words_per_line):
 	#file must exist!
 	if os.path.exists(filename):
 		#num_words has to be at least 1
 		if num_words > 0:
-			araby_markov_map = create_markov_map(filename, chunk_size)
-			generated_text = generate_text(num_words, araby_markov_map)
+			markov_map = create_markov_map(filename, chunk_size)
+			generated_text = generate_text(num_words, markov_map, words_per_line)
 			print generated_text
 
 		else:
@@ -119,13 +131,14 @@ if __name__ == "__main__":
 	if len(sys.argv) >= 4:
 		try:
 			num_words = int(sys.argv[2])
-			chunk_size = int(sys.argv[3])
-			main(sys.argv[1], num_words, chunk_size)
+			words_per_line = int(sys.argv[3])
+			chunk_size = int(sys.argv[4])
+			main(sys.argv[1], num_words, chunk_size, words_per_line)
 		except ValueError:
 			print "Error: Not a number."
 
 	elif len(sys.argv) == 1:
-		print "Usage: markov.py filename num_words"
+		print "Usage: markov.py filename num_words words_per_line chunk_size "
 
 	else:
 		print "Error: Must have two arguments."
