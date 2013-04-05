@@ -1,6 +1,8 @@
 #markov.py
 #Markov text generator
 
+import sys
+import os.path
 import random
 
 def create_markov_map(filename):
@@ -94,8 +96,35 @@ def generate_text(max_words, markov_map):
 
 	return " ".join(word_list)
 
-araby_markov_map = create_markov_map("araby.txt")
-generated_text = generate_text(500, araby_markov_map)
 
-print generated_text
+def main(filename, num_words):
+	#make sure the arguments are valid
+	if os.path.exists(filename):
+
+		if num_words > 0:
+			araby_markov_map = create_markov_map(filename)
+			generated_text = generate_text(num_words, araby_markov_map)
+			print generated_text
+
+		else:
+			print "Error: num_words must be greater than 0."
+
+	else:
+		print "Error: filename '{0}' does not exist!".format(filename)
+
+if __name__ == "__main__":
+	if len(sys.argv) >= 3:
+		try:
+			num_words = int(sys.argv[2])
+			main(sys.argv[1], num_words)
+		except ValueError:
+			print "Error: 2nd argument is not a number."
+
+	elif len(sys.argv) == 1:
+		print "Usage: markov.py filename num_words"
+
+	else:
+		print "Error: Must have two arguments."
+	
+
 
