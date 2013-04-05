@@ -22,29 +22,30 @@ def create_markov_map(filename, chunk_size):
 	#doesn't count in the calculation 
 	for i in range(len(word_list) - chunk_size):
 		word = word_list[i]
-		#get the next word from list of next words
-		#where the list has a size of chunk_size
-		next_word = " ".join(word_list[i+1:i+chunk_size+1])
+
+		#get the next chunk from the next n words
+		#where n = chunk_size
+		next_chunk = " ".join(word_list[i+1:i+chunk_size+1])
 
 		#word was not previously parsed
 		#create new element in map
 		if not word in markov_map:
 			markov_map[word] = {}
 
-		#next word was not previous parsed
+		#next chunk was not previous parsed
 		#create new element in map
-		if not next_word in markov_map[word]:
-			markov_map[word][next_word] = 1
+		if not next_chunk in markov_map[word]:
+			markov_map[word][next_chunk] = 1
 		else:
-			markov_map[word][next_word] += 1
+			markov_map[word][next_chunk] += 1
 
-	#now calculate the frequency of each word
+	#now calculate the frequency of each chunk
 	#which is important for to calculate the
 	#probability to each next_word to be picked
-	for word, word_info in markov_map.iteritems():
+	for word, chunk_info in markov_map.iteritems():
 		frequency = 0
 
-		for next_word, num in word_info.iteritems():
+		for next_chunk, num in chunk_info.iteritems():
 			frequency += num
 		
 		markov_map[word]["__frequency__"] = frequency
@@ -52,7 +53,7 @@ def create_markov_map(filename, chunk_size):
 	return markov_map
 
 
-def generate_text(max_words, markov_map, words_per_line):
+def generate_text(max_chunks, markov_map, words_per_line):
 	"""generate text sequence of a specified length using a given Markov map"""
 
 	chunk_list = []
@@ -61,50 +62,52 @@ def generate_text(max_words, markov_map, words_per_line):
 	word = random.choice(markov_map.keys())
 	chunk_list.append(word)
 
-	num_words = 1
-	while num_words < max_words:
-		next_words = markov_map[word]
+	num_chunks = 1
+	while num_chunks < max_chunks:
+		next_chunks = markov_map[word]
 		
-		#add up word values until it hits a threshold
-		#then add the current word into the generated word list
-		#this allows words with high values to have a higher
+		#add up chunk values until it hits a threshold
+		#then add the current chunk into the generated chunk list
+		#this allows chunk with high values to have a higher
 		#probability of being chosen
 		val = 0
-		threshold = int(round(random.random() * next_words["__frequency__"]))
+		threshold = int(round(random.random() * next_chunks["__frequency__"]))
 
-		#shuffle the word list to ensure randomness
-		shuffled_word_list = next_words.keys()
-		random.shuffle(shuffled_word_list)
+		#shuffle the chunk list to ensure randomness
+		shuffled_chunk_list = next_chunks.keys()
+		random.shuffle(shuffled_chunk_list)
 
-		for next_word in shuffled_word_list:
+		for next_chunk in shuffled_chunk_list:
 			#make sure we're not trying to choose '__frequency__'!
-			if not next_word == "__frequency__":
-				val += next_words[next_word]
-				#if the word value passes the treshold, select the word
+			if not next_chunk == "__frequency__":
+				val += next_chunks[next_chunk]
+				#if the chunk value passes the treshold, select the word
 				if val >= threshold:
 					break
 		
-		chunk_list.append(next_word)
+		chunk_list.append(next_chunk)
 
-		#if next_word is the last word, it is not in the markov map
+		#if next_chunk is the last chunk, it is not in the markov map
 		#find a random word to replace it instead
-		if not next_word in markov_map:
+		if not next_chunk in markov_map:
 			word = random.choice(markov_map.keys())
 		else:
 			#the next word should the first word of the chunk
-			word = next_word.split()[0]
+			word = next_chunk.split()[0]
 
-		num_words += 1
+		num_chunks += 1
 
+	#convert chunk list into a list of single words
 	word_list = " ".join(chunk_list).split()
 	text = ""
-
+	
+	#split output into lines
 	if words_per_line > 0:
-		#split output into lines
 		for i, word in enumerate(word_list):
 			text += word + " "
 			if (i+1) % words_per_line == 0:
 				text += "\n"
+	#keep output in one line
 	else:
 		text = " ".join(word_list)
 
