@@ -168,8 +168,7 @@ def main(filename, num_words, chunk_size, words_per_line):
 			
 			#clean up the generated text
 			generated_text = cleanup(generated_text)
-			
-			print len(generated_text)
+
 			print generated_text
 
 		else:
