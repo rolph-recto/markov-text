@@ -59,7 +59,15 @@ def generate_text(max_chunks, markov_map, words_per_line):
 	chunk_list = []
 
 	#pick a random word to start with
-	word = random.choice(markov_map.keys())
+	#make sure the word is capitalized
+	#to (somewhat) ensure the text begins
+	#with the beginning of a sentence
+	#this assumes that at least one word
+	#in the text is capitalized
+	word = "word"
+	while not word[0].isupper():
+		word = random.choice(markov_map.keys())
+		
 	chunk_list.append(word)
 
 	num_chunks = 1
