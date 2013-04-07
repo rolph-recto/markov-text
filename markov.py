@@ -52,6 +52,50 @@ def create_markov_map(filename, chunk_size):
 
 	return markov_map
 
+def select_next_chunk(last_chunk, next_chunks):
+	"""select the next chunk to add to the generated text"""
+
+	#add up chunk values until it hits a threshold
+	#then add the current chunk into the generated chunk list
+	#this allows chunk with high values to have a higher
+	#probability of being chosen
+	val = 0
+	threshold = int(round(random.random() * next_chunks["__frequency__"]))
+
+	#shuffle the chunk list to ensure randomness
+	shuffled_chunk_list = next_chunks.keys()
+	random.shuffle(shuffled_chunk_list)
+
+	for next_chunk in shuffled_chunk_list:
+		#make sure we're not trying to choose '__frequency__'!
+		if not next_chunk == "__frequency__":
+			val += next_chunks[next_chunk]
+			#if the chunk value passes the treshold, select the word
+			if val >= threshold:
+				break
+	
+	#if the last chunk was the end of a sentence,
+	#capitalize the next chunk
+	if last_chunk[-1] == '.' or last_chunk[-1] == '!' or last_chunk[-1] == '?':
+		next_chunk = next_chunk.capitalize()
+	
+	return next_chunk
+	
+def select_next_word(current_chunk, markov_map):
+	"""select the next word to use as a key"""
+	
+	next_word = ""
+	
+	#if next_chunk is the last chunk, it is not in the markov map
+	#find a random word to replace it instead
+	if not current_chunk in markov_map:
+		next_word = random.choice(markov_map.keys())
+	else:
+		#the next word should the first word of the chunk
+		next_word = current_chunk.split()[0]
+		
+	return next_word
+	
 def generate_text(max_chunks, markov_map, words_per_line):
 	"""generate text sequence of a specified length using a given Markov map"""
 
@@ -70,37 +114,16 @@ def generate_text(max_chunks, markov_map, words_per_line):
 	chunk_list.append(word)
 
 	num_chunks = 1
+	last_chunk = " "
+	next_chunk = " "
 	while num_chunks < max_chunks:
-		next_chunks = markov_map[word]
-		
-		#add up chunk values until it hits a threshold
-		#then add the current chunk into the generated chunk list
-		#this allows chunk with high values to have a higher
-		#probability of being chosen
-		val = 0
-		threshold = int(round(random.random() * next_chunks["__frequency__"]))
-
-		#shuffle the chunk list to ensure randomness
-		shuffled_chunk_list = next_chunks.keys()
-		random.shuffle(shuffled_chunk_list)
-
-		for next_chunk in shuffled_chunk_list:
-			#make sure we're not trying to choose '__frequency__'!
-			if not next_chunk == "__frequency__":
-				val += next_chunks[next_chunk]
-				#if the chunk value passes the treshold, select the word
-				if val >= threshold:
-					break
-		
+		#select a chunk and add it to the list
+		last_chunk = next_chunk
+		next_chunk = select_next_chunk(last_chunk, markov_map[word])
 		chunk_list.append(next_chunk)
 
-		#if next_chunk is the last chunk, it is not in the markov map
-		#find a random word to replace it instead
-		if not next_chunk in markov_map:
-			word = random.choice(markov_map.keys())
-		else:
-			#the next word should the first word of the chunk
-			word = next_chunk.split()[0]
+		#select the next word
+		word = select_next_word(next_chunk, markov_map)
 
 		num_chunks += 1
 
@@ -119,9 +142,6 @@ def generate_text(max_chunks, markov_map, words_per_line):
 		text = " ".join(word_list)
 		
 	return text
-
-def ends_in_punctuation(text):
-	return '.' in text or '?' in text or '!' in text
 	
 def end_sentence(text):
 	"""ensures that the generated text ends in a sentence"""
@@ -129,7 +149,7 @@ def end_sentence(text):
 	#if there is punctuation in the generated text
 	#that denotes a sentence, make sure the text
 	#ends in a complete sentence, not a fragment
-	if ends_in_punctuation(text):
+	if '.' in text or '?' in text or '!' in text:
 		#find the last instance of the punctuation '.', '?' or '!'
 		last_index = 0
 		for punctuation in ['.', '?', '!']:
