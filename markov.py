@@ -118,8 +118,26 @@ def generate_text(max_chunks, markov_map, words_per_line):
 	#keep output in one line
 	else:
 		text = " ".join(word_list)
-
-	return text
+		
+	#if there is punctuation in the generated text
+	#that denotes a sentence, make sure the text
+	#ends in a complete sentence, not a fragment
+	if '.' in text or '?' in text or '!' in text:
+		#find the last instance of the punctuation '.', '?' or '!'
+		period_index = text.rfind('.')
+		question_index = text.rfind('?')
+		exclamation_index = text.rfind('!')
+		
+		last_index = period_index
+		if question_index > last_index:
+			last_index = question_index
+		if exclamation_index > last_index:
+			last_index = exclamation_index
+		
+		return text[:last_index+1]
+	#if there is no sentence punctuation, return the whole text
+	else:
+		return text
 
 
 def main(filename, num_words, chunk_size, words_per_line):
